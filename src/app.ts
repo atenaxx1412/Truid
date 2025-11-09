@@ -34,10 +34,39 @@ class TruidApp {
 }
 
 export async function startApp(env: Environment): Promise<void> {
+  // Display permission confirmation
+  console.log('\nここでコーディングを開始しますか？\n');
+  console.log(process.cwd());
+  console.log('\nファイル操作の権限が必要です。');
+  console.log('これにより以下が可能になります:');
+  console.log('- このフォルダ内の任意のファイルを読み取る');
+  console.log('- ファイルの作成、編集、削除');
+  console.log('- コマンドの実行（npm、git、テスト、ls、rmなど）');
+  console.log('- .mcp.json で定義されたツールの使用');
+  console.log('\n詳細: https://docs.claude.com/s/claude-code-security\n');
+
+  // Create readline interface for permission check
+  const permissionRl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const answer = await new Promise<string>((resolve) => {
+    permissionRl.question('> 1. Yes, continue\n  2. No, exit\n\n確認のため入力してください > Escキーで終了\n', (ans) => {
+      permissionRl.close();
+      resolve(ans.trim());
+    });
+  });
+
+  if (answer !== '1' && answer.toLowerCase() !== 'yes') {
+    console.log('\n起動をキャンセルしました\n');
+    process.exit(0);
+  }
+
   // Check OAuth Token
   const oauthToken = process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
   if (!oauthToken) {
-    console.log('❌ エラー: CLAUDE_CODE_OAUTH_TOKENが設定されていません');
+    console.log('\nエラー: CLAUDE_CODE_OAUTH_TOKENが設定されていません');
     console.log('\n設定方法:');
     console.log('1. 別のターミナルで: claude setup-token');
     console.log('2. .envファイルに: CLAUDE_CODE_OAUTH_TOKEN=取得したtoken');
