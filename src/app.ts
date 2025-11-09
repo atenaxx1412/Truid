@@ -9,6 +9,7 @@ import * as readline from 'readline';
 import chalk from 'chalk';
 import type { Environment, ConversationEntry } from './core/types.js';
 import { loadConfig } from './core/config.js';
+import { getTerminalSize, isTerminalWideEnough, horizontalLine } from './core/terminal.js';
 import { printLogo } from './features/logo/index.js';
 import { displayPromptBox, closePromptBox } from './features/input/prompt.js';
 import { processMessageStream } from './features/stream/processor.js';
@@ -34,7 +35,19 @@ class TruidApp {
 }
 
 export async function startApp(env: Environment): Promise<void> {
-  // Display permission confirmation
+  // Check terminal size
+  const termSize = getTerminalSize();
+
+  // Check if terminal is wide enough
+  if (!isTerminalWideEnough(50)) {
+    console.log('\n警告: ターミナルの幅が狭すぎます。');
+    console.log(`現在: ${termSize.columns}文字 / 推奨: 50文字以上\n`);
+  }
+
+  // Display permission confirmation with responsive layout
+  const separator = horizontalLine('-', Math.min(termSize.columns, 70));
+
+  console.log('\n' + separator);
   console.log('\nここでコーディングを開始しますか？\n');
   console.log(process.cwd());
   console.log('\nファイル操作の権限が必要です。');
@@ -43,7 +56,8 @@ export async function startApp(env: Environment): Promise<void> {
   console.log('- ファイルの作成、編集、削除');
   console.log('- コマンドの実行（npm、git、テスト、ls、rmなど）');
   console.log('- .mcp.json で定義されたツールの使用');
-  console.log('\n詳細: https://docs.claude.com/s/claude-code-security\n');
+  console.log('\n詳細: https://docs.claude.com/s/claude-code-security');
+  console.log('\n' + separator + '\n');
 
   // Create readline interface for permission check
   const permissionRl = readline.createInterface({
