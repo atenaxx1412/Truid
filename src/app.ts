@@ -52,7 +52,7 @@ export async function startApp(env: Environment): Promise<void> {
     '',
     process.cwd(),
     '',
-    'ファイル操作の権限が必要です。',
+    chalk.bold('ファイル操作の権限が必要です。'),
     'これにより以下が可能になります:',
     '- このフォルダ内の任意のファイルを読み取る',
     '- ファイルの作成、編集、削除',

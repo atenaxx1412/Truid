@@ -23,7 +23,8 @@ export async function interactiveSelect(
     const renderOptions = () => {
       if (!isFirstRender) {
         // Move cursor up to the start of the options
-        const linesToMove = options.length + 2; // options + instructions line + empty line
+        // Need to move: options + empty line + instructions line
+        const linesToMove = options.length + 2;
         process.stdout.write('\x1b[' + linesToMove + 'A');
       }
 
@@ -37,8 +38,11 @@ export async function interactiveSelect(
         process.stdout.write('\x1b[2K\r' + prefix + ' ' + text + '\n');
       });
 
-      // Add instructions
-      process.stdout.write('\x1b[2K\r' + chalk.dim('\n矢印キー: 選択  Enter: 確定  Esc: 終了'));
+      // Empty line
+      process.stdout.write('\x1b[2K\r\n');
+
+      // Add instructions (no newline before, already on new line)
+      process.stdout.write('\x1b[2K\r' + chalk.dim('矢印キー: 選択  Enter: 確定  Esc: 終了'));
 
       isFirstRender = false;
     };
