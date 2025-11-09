@@ -9,7 +9,8 @@ import * as readline from 'readline';
 import chalk from 'chalk';
 import type { Environment, ConversationEntry } from './core/types.js';
 import { loadConfig } from './core/config.js';
-import { getTerminalSize, isTerminalWideEnough, horizontalLine } from './core/terminal.js';
+import { getTerminalSize, isTerminalWideEnough, createBox } from './core/terminal.js';
+import { interactiveSelect } from './core/interactive.js';
 import { printLogo } from './features/logo/index.js';
 import { displayPromptBox, closePromptBox } from './features/input/prompt.js';
 import { processMessageStream } from './features/stream/processor.js';
@@ -44,35 +45,36 @@ export async function startApp(env: Environment): Promise<void> {
     console.log(`現在: ${termSize.columns}文字 / 推奨: 50文字以上\n`);
   }
 
-  // Display permission confirmation with responsive layout
-  const separator = horizontalLine('-', Math.min(termSize.columns, 70));
+  // Display permission confirmation in a box
+  const boxLines = [
+    '',
+    'ここでコーディングを開始しますか？',
+    '',
+    process.cwd(),
+    '',
+    'ファイル操作の権限が必要です。',
+    'これにより以下が可能になります:',
+    '- このフォルダ内の任意のファイルを読み取る',
+    '- ファイルの作成、編集、削除',
+    '- コマンドの実行（npm、git、テスト、ls、rmなど）',
+    '- .mcp.json で定義されたツールの使用',
+    '',
+    '詳細: https://docs.claude.com/s/claude-code-security',
+    '',
+  ];
 
-  console.log('\n' + separator);
-  console.log('\nここでコーディングを開始しますか？\n');
-  console.log(process.cwd());
-  console.log('\nファイル操作の権限が必要です。');
-  console.log('これにより以下が可能になります:');
-  console.log('- このフォルダ内の任意のファイルを読み取る');
-  console.log('- ファイルの作成、編集、削除');
-  console.log('- コマンドの実行（npm、git、テスト、ls、rmなど）');
-  console.log('- .mcp.json で定義されたツールの使用');
-  console.log('\n詳細: https://docs.claude.com/s/claude-code-security');
-  console.log('\n' + separator + '\n');
+  console.log('\n' + createBox(boxLines));
+  console.log('');
 
-  // Create readline interface for permission check
-  const permissionRl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+  // Interactive selection
+  const options = [
+    { label: 'Yes, continue', value: true },
+    { label: 'No, exit', value: false },
+  ];
 
-  const answer = await new Promise<string>((resolve) => {
-    permissionRl.question('> 1. Yes, continue\n  2. No, exit\n\n確認のため入力してください > Escキーで終了\n', (ans) => {
-      permissionRl.close();
-      resolve(ans.trim());
-    });
-  });
+  const answer = await interactiveSelect(options, 0);
 
-  if (answer !== '1' && answer.toLowerCase() !== 'yes') {
+  if (!answer) {
     console.log('\n起動をキャンセルしました\n');
     process.exit(0);
   }

@@ -71,3 +71,28 @@ export function horizontalLine(char: string = '-', width?: number): string {
   const lineWidth = width || Math.min(columns, 80);
   return char.repeat(lineWidth);
 }
+
+/**
+ * Create a boxed message
+ */
+export function createBox(lines: string[], width?: number): string {
+  const { columns } = getTerminalSize();
+  const boxWidth = width || Math.min(columns - 4, 70);
+
+  // Calculate padding for centering
+  const padding = ' '.repeat(Math.floor((columns - boxWidth) / 2));
+
+  const top = padding + '╔' + '═'.repeat(boxWidth - 2) + '╗';
+  const bottom = padding + '╚' + '═'.repeat(boxWidth - 2) + '╝';
+
+  const boxedLines = lines.map(line => {
+    const lineLength = line.length;
+    const contentPadding = boxWidth - 4;
+    const leftPad = Math.floor((contentPadding - lineLength) / 2);
+    const rightPad = contentPadding - lineLength - leftPad;
+
+    return padding + '║ ' + ' '.repeat(leftPad) + line + ' '.repeat(rightPad) + ' ║';
+  });
+
+  return [top, ...boxedLines, bottom].join('\n');
+}
