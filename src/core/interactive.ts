@@ -18,11 +18,13 @@ export async function interactiveSelect(
 ): Promise<string | boolean> {
   return new Promise((resolve) => {
     let selectedIndex = defaultIndex;
+    let isFirstRender = true;
 
     const renderOptions = () => {
-      // Clear previous lines
-      if (selectedIndex > 0) {
-        process.stdout.write('\x1b[' + (options.length + 1) + 'A'); // Move cursor up
+      if (!isFirstRender) {
+        // Move cursor up to the start of the options
+        const linesToMove = options.length + 2; // options + instructions line + empty line
+        process.stdout.write('\x1b[' + linesToMove + 'A');
       }
 
       // Render each option
@@ -31,12 +33,14 @@ export async function interactiveSelect(
         const prefix = isSelected ? chalk.green('→') : ' ';
         const text = isSelected ? chalk.green(option.label) : chalk.dim(option.label);
 
-        // Clear line and write
-        process.stdout.write('\r\x1b[K' + prefix + ' ' + text + '\n');
+        // Clear entire line and write
+        process.stdout.write('\x1b[2K\r' + prefix + ' ' + text + '\n');
       });
 
       // Add instructions
-      process.stdout.write('\r\x1b[K' + chalk.dim('\n矢印キー: 選択  Enter: 確定  Esc: 終了'));
+      process.stdout.write('\x1b[2K\r' + chalk.dim('\n矢印キー: 選択  Enter: 確定  Esc: 終了'));
+
+      isFirstRender = false;
     };
 
     // Initial render

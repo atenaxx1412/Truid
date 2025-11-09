@@ -1,6 +1,7 @@
 /**
  * Terminal utility functions
  */
+import stringWidth from 'string-width';
 
 export interface TerminalSize {
   columns: number;
@@ -73,25 +74,26 @@ export function horizontalLine(char: string = '-', width?: number): string {
 }
 
 /**
- * Create a boxed message
+ * Create a boxed message with left-aligned text
  */
 export function createBox(lines: string[], width?: number): string {
   const { columns } = getTerminalSize();
   const boxWidth = width || Math.min(columns - 4, 70);
 
-  // Calculate padding for centering
-  const padding = ' '.repeat(Math.floor((columns - boxWidth) / 2));
+  // Calculate padding for centering the box
+  const boxPadding = ' '.repeat(Math.floor((columns - boxWidth) / 2));
 
-  const top = padding + '╔' + '═'.repeat(boxWidth - 2) + '╗';
-  const bottom = padding + '╚' + '═'.repeat(boxWidth - 2) + '╝';
+  const top = boxPadding + '╔' + '═'.repeat(boxWidth - 2) + '╗';
+  const bottom = boxPadding + '╚' + '═'.repeat(boxWidth - 2) + '╝';
 
   const boxedLines = lines.map(line => {
-    const lineLength = line.length;
-    const contentPadding = boxWidth - 4;
-    const leftPad = Math.floor((contentPadding - lineLength) / 2);
-    const rightPad = contentPadding - lineLength - leftPad;
+    // Calculate actual display width considering full-width characters
+    const lineWidth = stringWidth(line);
+    const contentWidth = boxWidth - 4; // 2 for borders, 2 for padding
+    const leftPad = 2; // Fixed left padding
+    const rightPad = Math.max(0, contentWidth - lineWidth - leftPad);
 
-    return padding + '║ ' + ' '.repeat(leftPad) + line + ' '.repeat(rightPad) + ' ║';
+    return boxPadding + '║ ' + ' '.repeat(leftPad) + line + ' '.repeat(rightPad) + ' ║';
   });
 
   return [top, ...boxedLines, bottom].join('\n');
