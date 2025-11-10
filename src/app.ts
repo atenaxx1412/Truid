@@ -75,9 +75,12 @@ export async function startApp(env: Environment): Promise<void> {
   const answer = await interactiveSelect(options, 0);
 
   if (!answer) {
-    console.log('\n起動をキャンセルしました\n');
+    console.log('起動をキャンセルしました\n');
     process.exit(0);
   }
+
+  // Clear screen completely including scroll buffer (like opening a new tab)
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
 
   // Check OAuth Token
   const oauthToken = process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ANTHROPIC_API_KEY;

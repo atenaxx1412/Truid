@@ -18,33 +18,35 @@ export async function interactiveSelect(
 ): Promise<string | boolean> {
   return new Promise((resolve) => {
     let selectedIndex = defaultIndex;
-    let isFirstRender = true;
 
     const renderOptions = () => {
-      if (!isFirstRender) {
-        // Move cursor up to the start of the options
-        // Need to move: options + empty line + instructions line
-        const linesToMove = options.length + 2;
-        process.stdout.write('\x1b[' + linesToMove + 'A');
-      }
-
       // Render each option
       options.forEach((option, index) => {
         const isSelected = index === selectedIndex;
         const prefix = isSelected ? chalk.green('→') : ' ';
         const text = isSelected ? chalk.green(option.label) : chalk.dim(option.label);
 
-        // Clear entire line and write
-        process.stdout.write('\x1b[2K\r' + prefix + ' ' + text + '\n');
+        process.stdout.write(prefix + ' ' + text + '\n');
       });
 
       // Empty line
-      process.stdout.write('\x1b[2K\r\n');
+      process.stdout.write('\n');
 
-      // Add instructions (no newline before, already on new line)
-      process.stdout.write('\x1b[2K\r' + chalk.dim('矢印キー: 選択  Enter: 確定  Esc: 終了'));
+      // Add instructions (with newline to move cursor to next line)
+      process.stdout.write(chalk.dim('矢印キー: 選択  Enter: 確定  Esc: 終了') + '\n');
+    };
 
-      isFirstRender = false;
+    const updateDisplay = () => {
+      // Move cursor up to start of options
+      // options.length lines + 1 empty line + 1 instruction line
+      const linesToMove = options.length + 2;
+      process.stdout.write(`\x1b[${linesToMove}A`);
+
+      // Clear from cursor to end of screen
+      process.stdout.write('\x1b[J');
+
+      // Re-render options
+      renderOptions();
     };
 
     // Initial render
@@ -63,20 +65,21 @@ export async function interactiveSelect(
       if (key === '\u001b[A') {
         // Up arrow
         selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : options.length - 1;
-        renderOptions();
+        updateDisplay();
       } else if (key === '\u001b[B') {
         // Down arrow
         selectedIndex = selectedIndex < options.length - 1 ? selectedIndex + 1 : 0;
-        renderOptions();
+        updateDisplay();
       } else if (key === '\r' || key === '\n') {
         // Enter
         cleanup();
-        console.log('\n'); // Add spacing after selection
+        // Clear the line and move to next line
+        process.stdout.write('\r\x1b[K\n');
         resolve(options[selectedIndex].value);
       } else if (key === '\u001b' || key === '\u0003') {
         // Esc or Ctrl+C
         cleanup();
-        console.log('\n');
+        process.stdout.write('\r\x1b[K\n');
         process.exit(0);
       }
     };
